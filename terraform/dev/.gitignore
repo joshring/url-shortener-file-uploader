@@ -1,0 +1,6 @@
+.terraform/**/*
+.terraform/**/*.json
+.terraform/**/*.tf
+lambda_layer.zip
+lambda_function_payload.zip
+.terraform.lock.hcl
