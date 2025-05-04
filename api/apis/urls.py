@@ -93,6 +93,7 @@ async def post_file(
     dynamodb: Annotated[Any, Depends(dynamodb_conn)],
     file: UploadFile = File(),
 ):
+    username = "hard_coded_user"
 
     # Convert to bytes and pass to S3 upload
     upload_file = io.BytesIO(await file.read())
@@ -103,11 +104,11 @@ async def post_file(
         filename,
     )
 
-    original_url = f"https://{s3_bucket_https_url}/{filename}"
+    original_url = f"https://{s3_bucket_https_url}/{username}/{filename}"
 
     return gen_url_store_in_dynamo(
         dynamodb=dynamodb,
-        username="hard_coded_user",
+        username=username,
         original_url=original_url,
         url_type=UrlType.file_url,
     )
@@ -119,9 +120,11 @@ async def post_url(
     dynamodb: Annotated[Any, Depends(dynamodb_conn)],
 ) -> Url:
 
+    username = "hard_coded_user"
+
     return gen_url_store_in_dynamo(
         dynamodb=dynamodb,
-        username="hard_coded_user",
+        username=username,
         original_url=create_url.original_url,
         url_type=UrlType.site_url,
     )
@@ -132,22 +135,24 @@ async def get_urls(
     dynamodb: Annotated[Any, Depends(dynamodb_conn)],
 ) -> UserUrls:
 
+    username = "hard_coded_user"
+
     urls_table = dynamodb.Table("urls")
 
     try:
         response = urls_table.scan(
-            FilterExpression=Attr("user_name").eq("hard_coded_user"),
+            FilterExpression=Attr("user_name").eq(username),
         )
 
     except ClientError as err:
         logger.error(
-            f"Couldn't scan urls table for user_name {"hard_coded_user"}. Here's why: {err.response["Error"]["Code"]}: {err.response["Error"]["Message"]}"
+            f"Couldn't scan urls table for user_name {username}. Here's why: {err.response["Error"]["Code"]}: {err.response["Error"]["Message"]}"
         )
         raise HTTPException(HTTPStatus.INTERNAL_SERVER_ERROR, err.response["Error"]["Message"])
 
     if response.get("Items") is None:
         return UserUrls(
-            user_name="hard_coded_user",
+            user_name=username,
             urls=[],
         )
 
@@ -157,7 +162,7 @@ async def get_urls(
         list_urls.append(Url(**item))
 
     return UserUrls(
-        user_name="hard_coded_user",
+        user_name=username,
         urls=list_urls,
     )
 
